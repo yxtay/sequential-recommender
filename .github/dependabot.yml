@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: build(docker)
+    groups:
+      docker:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: ci(github-actions)
+    groups:
+      github-actions:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: checkmarx/kics-github-action
+        versions: [2.1.8]
+
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: build(pip)
+    groups:
+      pip:
+        update-types: [minor, patch]
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: daily
+    commit-message:
+      prefix: build(uv)
+    groups:
+      uv:
+        update-types: [minor, patch]

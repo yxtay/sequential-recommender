@@ -1,0 +1,15 @@
+services:
+  app:
+    image: ghcr.io/yxtay/sequental-recommender:main
+    build:
+      cache_from:
+        - ghcr.io/yxtay/sequental-recommender:cache
+        - ghcr.io/yxtay/sequental-recommender:main
+    volumes:
+      - ./data:/work/app/data
+    healthcheck:
+      test: [CMD, uv, run, lightning, fit, --print_config]
+    cap_drop:
+      - all
+    security_opt:
+      - no-new-privileges:true
