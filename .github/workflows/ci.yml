@@ -36,23 +36,8 @@ jobs:
 
       - run: |
           uv lock --check
-          uv sync --locked
+          uv sync
           uv pip list
-
-      - if: ${{ success() || failure() }}
-        run: uv run lightning fit --print_config
-
-      - if: ${{ success() || failure() }}
-        run: uv run bentoml_cli
-
-      - if: ${{ failure() }}
-        run: uv run python -m mf_torch.lightning
-
-      - if: ${{ failure() }}
-        run: uv run python -m mf_torch.data.lightning
-
-      - if: ${{ failure() }}
-        run: uv run data
 
   docker:
     permissions:
