@@ -60,4 +60,4 @@ COPY sequential_recommender sequential_recommender
 RUN uv sync --no-default-groups
 
 USER ${USER}
-HEALTHCHECK None
+HEALTHCHECK NONE
