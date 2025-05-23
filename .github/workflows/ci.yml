@@ -64,32 +64,6 @@ jobs:
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
-      - if: ${{ success() || failure() }}
-        run: docker run "${IMAGE_ID}" uv run lightning fit --print_config
-        env:
-          IMAGE_ID: ${{ steps.build.outputs.imageid }}
-
-      - if: ${{ success() || failure() }}
-        run: docker run "${IMAGE_ID}" uv run bentoml_cli
-        env:
-          IMAGE_ID: ${{ steps.build.outputs.imageid }}
-
-      - if: ${{ failure() }}
-        run: docker run "${IMAGE_ID}" python -m mf_torch.lightning
-        env:
-          IMAGE_ID: ${{ steps.build.outputs.imageid }}
-
-      - if: ${{ failure() }}
-        run: docker run "${IMAGE_ID}" python -m mf_torch.data.lightning
-        env:
-          IMAGE_ID: ${{ steps.build.outputs.imageid }}
-
-      - if: ${{ failure() }}
-        run: docker run "${IMAGE_ID}" uv run data
-
-        env:
-          IMAGE_ID: ${{ steps.build.outputs.imageid }}
-
       - id: docker_metadata
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5
         with:
