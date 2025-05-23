@@ -7,7 +7,9 @@ name = "sequential_recommender"
 version = "0.1.0"
 description = "Sequential Recommender with Torch, Lightning and Transformers"
 readme = "README.md"
-authors = [{ name = "YuXuan Tay", email = "5795122+yxtay@users.noreply.github.com" }]
+authors = [
+  { name = "YuXuan Tay", email = "5795122+yxtay@users.noreply.github.com" },
+]
 license = "MIT"
 requires-python = ">=3.13"
 dependencies = [
