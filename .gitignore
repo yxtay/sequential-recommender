@@ -129,7 +129,9 @@ celerybeat.pid
 
 # Environments
 .env
-.venv
+.envrc
+.direnv/
+.venv/
 env/
 venv/
 ENV/
@@ -172,3 +174,10 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+/data
+data.lock
+lance_db
+lightning_logs
+megalinter-reports
+mlruns
