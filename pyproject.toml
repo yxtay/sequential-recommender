@@ -3,7 +3,7 @@ requires = ["poetry-core>=2.0,<3.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
-name = "sequential_recommender"
+name = "seq_rec"
 version = "0.1.0"
 description = "Sequential Recommender with Torch, Lightning and Transformers"
 readme = "README.md"
@@ -31,8 +31,11 @@ dependencies = [
 [dependency-groups]
 dev = ["onnxruntime~=1.20", "onnxscript>=0.2.0"]
 
+[project.scripts]
+data = "mf_torch.data.prepare:main"
+
 [tool.bentoml.build]
-service = "sequential_recommender.bentoml.service:Service"
+service = "seq_rec.bentoml.service:Service"
 description = "file: ./README.md"
 include = ["**/*.py", "README.md"]
 envs = [{ name = "UV_NO_CACHE", value = "1" }]
