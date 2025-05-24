@@ -27,11 +27,12 @@ def download_data(
     # prepare destination
     dest = pathlib.Path(dest_dir) / pathlib.Path(url).name
 
-    # downlaod zip
+    # download zip
     if not dest.exists() or overwrite:
         dest.parent.mkdir(parents=True, exist_ok=True)
         logger.info("downloading data: {}", url)
         response = requests.get(url, timeout=10, stream=True)
+        response.raise_for_status()
         with dest.open("wb") as f:
             shutil.copyfileobj(response.raw, f)
 
