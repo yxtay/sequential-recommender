@@ -40,7 +40,7 @@ jobs:
           uv sync
           uv pip list
 
-      - run: python -m "${PROJECT_NAME}.data.prepare"
+      - run: uv run python -m "${PROJECT_NAME}.data.prepare"
 
   docker:
     permissions:
