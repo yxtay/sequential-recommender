@@ -24,7 +24,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      PROJECT_NAME: seq-rec
+      PROJECT_NAME: seq_rec
       UV_LOCKED: 1
       UV_NO_SYNC: 1
     steps:
@@ -49,7 +49,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      PROJECT_NAME: seq-rec
+      PROJECT_NAME: seq_rec
       GHCR_IMAGE_NAME: ghcr.io/${{ github.repository }}
 
     steps:
