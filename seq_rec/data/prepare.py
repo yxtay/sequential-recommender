@@ -87,7 +87,6 @@ def load_movies(src_dir: str = DATA_DIR) -> pl.LazyFrame:
         .drop(*ITEM_FEATURE_NAMES)
     )
     logger.info("movies loaded: {}, shape: {}", movies_dat, movies.shape)
-    logger.info("movies columns: {}", movies.columns)
 
     return movies.lazy()
 
