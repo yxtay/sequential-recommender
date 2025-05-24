@@ -2065,7 +2065,7 @@ wheels = [
 ]
 
 [[package]]
-name = "sequential-recommender"
+name = "seq-rec"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

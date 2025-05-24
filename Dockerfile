@@ -56,7 +56,7 @@ RUN uv python install && \
     uv pip list
 
 # set up project
-COPY sequential_recommender sequential_recommender
+COPY seq_rec seq_rec
 RUN uv sync --no-default-groups
 
 USER ${USER}
