@@ -188,7 +188,7 @@ class ItemsProcessor(FeaturesProcessor):
         elif torch.mps.is_available():
             accelerator = "mps"
         else:
-            accelerator = "cpu"
+            accelerator = None
 
         schema = pa.RecordBatch.from_pylist(batch).schema
         schema = schema.set(

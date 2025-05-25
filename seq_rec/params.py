@@ -14,7 +14,7 @@ ITEM_JSON_COL = "movie_json"
 ITEM_FEATURE_NAMES = ["title", "genres"]
 
 # model
-ENCODER_MODEL_NAME = "avsolatorio/GIST-small-Embedding-v0"
+ENCODER_MODEL_NAME = "avsolatorio/GIST-all-MiniLM-L6-v2"
 BATCH_SIZE = 2**10
 EMBEDDING_DIM = 384
 PADDING_IDX = 0
