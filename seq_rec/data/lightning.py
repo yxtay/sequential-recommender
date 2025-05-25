@@ -78,8 +78,8 @@ class FeaturesProcessor(pydantic.BaseModel):
             device="cuda" if torch.cuda.is_available() else "cpu",
         )
 
-    def get_embeddings(self: Self, example: dict[str, Any]) -> torch.Tensor:
-        return self.encoder.encode(example[self.json_col])
+    def embed(self: Self, example: dict[str, Any]) -> torch.Tensor:
+        return self.encoder.encode(example[self.json_col], normalize_embeddings=True)
 
     def process(self: Self, example: dict[str, Any]) -> FeaturesType:
         import xxhash
@@ -87,7 +87,7 @@ class FeaturesProcessor(pydantic.BaseModel):
         return {
             **example,
             "idx": xxhash.xxh32_intdigest(str(example[self.id_col])),
-            "embeddings": self.get_embeddings(example),
+            "embeddings": self.embed(example),
         }
 
     def collate(self: Self, batch: list[FeaturesType]) -> FeaturesType:
@@ -250,12 +250,12 @@ class UsersProcessor(FeaturesProcessor):
 
     items_processor: ItemsProcessor
 
-    def get_embeddings(self: Self, example: dict[str, Any]) -> torch.Tensor:
+    def embed(self: Self, example: dict[str, Any]) -> torch.Tensor:
         history_json = (
             item[self.items_processor.json_col] for item in example.get("history", [])
         )
         history_json = list(reversed([*history_json, example[self.json_col]]))
-        return self.encoder.encode(history_json)
+        return self.encoder.encode(history_json, normalize_embeddings=True)
 
     @functools.cached_property
     def data_path(self) -> str:
