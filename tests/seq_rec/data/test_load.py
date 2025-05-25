@@ -16,6 +16,6 @@ def test_pad_tensors(
 ) -> None:
     from seq_rec.data.load import pad_tensors
 
-    batch = [torch.rand(size) for size in batch_sizes]
+    batch = [torch.rand(size) for size in batch_sizes]  # devskim: ignore DS148264
     padded = pad_tensors(batch, dim=dim)
     assert padded.size() == expected_size, f"{padded.size() = } != {expected_size = }"
