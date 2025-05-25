@@ -437,7 +437,7 @@ class SeqRecDataModule(LightningDataModule):
             collate_fn=collate_fn,
             shuffle=shuffle,
             num_workers=num_workers,
-            pin_memory=not torch.mps.is_available(),
+            pin_memory=torch.cuda.is_available(),
             multiprocessing_context=multiprocessing_context,
             persistent_workers=num_workers > 0,
         )
