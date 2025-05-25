@@ -71,7 +71,7 @@ class FeaturesProcessor(pydantic.BaseModel):
     data_dir: str = DATA_DIR
     lance_db_path: str = LANCE_DB_PATH
 
-    @property
+    @functools.cached_property
     def encoder(self: Self) -> SentenceTransformer:
         return SentenceTransformer(
             self.encoder_model_name,
@@ -131,13 +131,13 @@ class FeaturesProcessor(pydantic.BaseModel):
             .collate(collate_fn=self.collate)
         )
 
-    @property
+    @functools.cached_property
     def lance_db(self: Self) -> lancedb.DBConnection:
         import lancedb
 
         return lancedb.connect(self.lance_db_path)
 
-    @property
+    @functools.cached_property
     def lance_table(self: Self) -> lancedb.table.Table:
         return self.lance_db.open_table(self.lance_table_name)
 
@@ -160,7 +160,7 @@ class ItemsProcessor(FeaturesProcessor):
     num_probes: int = 8
     refine_factor: int = 4
 
-    @property
+    @functools.cached_property
     def data_path(self) -> str:
         return pathlib.Path(self.data_dir, "ml-1m", "movies.parquet").as_posix()
 
@@ -257,7 +257,7 @@ class UsersProcessor(FeaturesProcessor):
         history_json = list(reversed([*history_json, example[self.json_col]]))
         return self.encoder.encode(history_json)
 
-    @property
+    @functools.cached_property
     def data_path(self) -> str:
         return pathlib.Path(self.data_dir, "ml-1m", "users.parquet").as_posix()
 
