@@ -40,7 +40,14 @@ jobs:
           uv sync
           uv pip list
 
-      - run: uv run python -m "${PROJECT_NAME}.data.prepare"
+      - if: ${{ success() || failure() }}
+        run: uv run pytest
+
+      - if: ${{ success() || failure() }}
+        run: uv run python -m "${PROJECT_NAME}.data.lightning"
+
+      - if: ${{ failure() }}
+        run: uv run python -m "${PROJECT_NAME}.data.prepare"
 
   docker:
     permissions:
@@ -69,6 +76,16 @@ jobs:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ success() || failure() }}
+        run: docker run "${IMAGE_ID}" uv run pytest
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+
+      - if: ${{ failure() }}
+        run: docker run "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.lightning"
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+
+      - if: ${{ failure() }}
         run: docker run "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
