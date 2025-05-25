@@ -2508,13 +2508,13 @@ requires-dist = [
     { name = "bentoml", specifier = "~=1.3" },
     { name = "flaml", extras = ["automl", "blendsearch"], specifier = "~=2.3" },
     { name = "jsonargparse", extras = ["signatures"], specifier = "~=4.35" },
-    { name = "lancedb", specifier = ">=0.19" },
+    { name = "lancedb", specifier = ">=0.19,<1.0" },
     { name = "lightning", specifier = "~=2.5" },
-    { name = "loguru", specifier = ">=0.7,<0.8" },
+    { name = "loguru", specifier = ">=0.7,<1.0" },
     { name = "mlflow", specifier = "~=2.19" },
     { name = "pandas", specifier = "~=2.2" },
     { name = "polars", extras = ["pandas"], specifier = "~=1.19" },
-    { name = "pylance", specifier = ">=0.25" },
+    { name = "pylance", specifier = ">=0.25,<1.0" },
     { name = "sentence-transformers", specifier = "~=4.1" },
     { name = "tensorboard", specifier = "~=2.18" },
     { name = "torch", marker = "sys_platform != 'linux'", specifier = "~=2.5" },
@@ -2526,7 +2526,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "onnxruntime", specifier = "~=1.20" },
-    { name = "onnxscript", specifier = ">=0.2" },
+    { name = "onnxscript", specifier = ">=0.2,<1.0" },
     { name = "pytest", specifier = "~=8.3" },
 ]
 
