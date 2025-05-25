@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
-      - uses: actions/cache@b0c1f8d2a3e4f6b7c5d9e4c3f5b6a7b8c9d0e1f2 # v4
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
         with:
           path: ${{ env.HF_HOME }}
           key: ${{ runner.os }}-huggingface-${{ hashFiles('**/uv.lock') }}
