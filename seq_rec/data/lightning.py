@@ -182,11 +182,13 @@ class ItemsProcessor(FeaturesProcessor):
         # rule of thumb: nlist ~= 4 * sqrt(n_vectors)
         num_partitions = self.num_partitions or 2 ** int(math.log2(num_items) / 2)
         num_sub_vectors = self.num_sub_vectors or embedding_dim // 8
-        accelerator = "cpu"
+
         if torch.cuda.is_available():
             accelerator = "cuda"
-        if torch.mps.is_available():
+        elif torch.mps.is_available():
             accelerator = "mps"
+        else:
+            accelerator = "cpu"
 
         schema = pa.RecordBatch.from_pylist(batch).schema
         schema = schema.set(
