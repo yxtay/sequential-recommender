@@ -83,7 +83,7 @@ jobs:
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
-      - if: ${{ failure() }}
+      - if: ${{ success() || failure() }}
         run: docker run "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.lightning"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
