@@ -3,7 +3,7 @@ import torch
 
 
 @pytest.mark.parametrize(
-    ("batch_sizes", "dim", "pad_end", "expected_size"),
+    ("batch_sizes", "dim", "pad_start", "expected_size"),
     [
         ([(1,), (3,)], 0, False, (2, 3)),
         ([(1,), (3,)], -1, False, (2, 3)),
@@ -16,10 +16,10 @@ import torch
     ],
 )
 def test_pad_tensors(
-    *, batch_sizes: tuple[int], dim: int, pad_end: bool, expected_size: tuple[int]
+    *, batch_sizes: tuple[int], dim: int, pad_start: bool, expected_size: tuple[int]
 ) -> None:
     from seq_rec.data.load import pad_tensors
 
     batch = [torch.rand(size) for size in batch_sizes]  # devskim: ignore DS148264
-    padded = pad_tensors(batch, dim=dim, pad_end=pad_end)
+    padded = pad_tensors(batch, dim=dim, pad_start=pad_start)
     assert padded.size() == expected_size, f"{padded.size() = } != {expected_size = }"
