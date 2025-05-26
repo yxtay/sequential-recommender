@@ -33,16 +33,17 @@ def pad_tensors(
     batch: Iterable[torch.Tensor],
     dim: int = -1,
     *,
-    pad_left: bool = False,
+    pad_end: bool = False,
     pad_value: int = 0,
 ) -> torch.Tensor:
     elem = next(iter(batch))
     pad_size = max(example.size(dim) for example in iter(batch))
     pad = [0] * (elem.dim() * 2)
-    pad_dim = 2 * dim + (not pad_left)
+    pad_dim = 2 * dim + pad_end
 
     def pad_tensor(tensor: torch.Tensor) -> torch.Tensor:
-        pad[-pad_dim] = pad_size - tensor.size(dim)
+        # pad tuple dimensions is reversed
+        pad[-pad_dim - 1] = pad_size - tensor.size(dim)
         return F.pad(tensor, pad, value=pad_value)
 
     return torch.stack([pad_tensor(example) for example in batch])
