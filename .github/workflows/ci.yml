@@ -24,11 +24,19 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
+      HF_HOME: /tmp/huggingface
       PROJECT_NAME: seq_rec
       UV_LOCKED: 1
       UV_NO_SYNC: 1
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
+        with:
+          path: ${{ env.HF_HOME }}
+          key: ${{ runner.os }}-huggingface-${{ hashFiles('**/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-huggingface-
 
       - uses: astral-sh/setup-uv@f0ec1fc3b38f5e7cd731bb6ce540c5af426746bb # v6
 
@@ -40,7 +48,14 @@ jobs:
           uv sync
           uv pip list
 
-      - run: uv run python -m "${PROJECT_NAME}.data.prepare"
+      - if: ${{ success() || failure() }}
+        run: uv run pytest
+
+      - if: ${{ success() || failure() }}
+        run: uv run python -m "${PROJECT_NAME}.data.lightning"
+
+      - if: ${{ failure() }}
+        run: uv run python -m "${PROJECT_NAME}.data.prepare"
 
   docker:
     permissions:
@@ -49,8 +64,8 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      PROJECT_NAME: seq_rec
       GHCR_IMAGE_NAME: ghcr.io/${{ github.repository }}
+      PROJECT_NAME: seq_rec
 
     steps:
       - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
