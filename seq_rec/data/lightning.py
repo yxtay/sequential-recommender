@@ -26,6 +26,7 @@ from seq_rec.params import (
     ITEM_JSON_COL,
     ITEMS_TABLE_NAME,
     LANCE_DB_PATH,
+    MAX_SEQ_LEN,
     MOVIELENS_1M_URL,
     TARGET_COL,
     TOP_K,
@@ -252,12 +253,14 @@ class UsersProcessor(FeaturesProcessor):
     lance_table_name: str = USERS_TABLE_NAME
 
     items_processor: ItemsProcessor
+    max_seq_len: int = MAX_SEQ_LEN
 
     def embed(self: Self, example: dict[str, Any]) -> torch.Tensor:
         history_json = (
             item[self.items_processor.json_col] for item in example.get("history", [])
         )
         history_json = list(reversed([*history_json, example[self.json_col]]))
+        history_json = history_json[: self.max_seq_len]
         return self.encoder.encode(history_json, normalize_embeddings=True)
 
     @functools.cached_property
