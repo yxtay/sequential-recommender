@@ -3,7 +3,7 @@
 ##
 # base
 ##
-FROM debian:stable-slim@sha256:b3ef39b8a45ee3b689c462dfa711454bcfc9c9965fe81c6cfb7ff4029b5b8cd7 AS base
+FROM python:3.13-slim AS base
 LABEL maintainer="wyextay@gmail.com"
 
 # set up user
@@ -49,8 +49,7 @@ ARG UV_NO_CACHE=1
 # set up python
 COPY --from=ghcr.io/astral-sh/uv:latest@sha256:0178a92d156b6f6dbe60e3b52b33b421021f46d634aa9f81f42b91445bb81cdf /uv /uvx /bin/
 COPY .python-version pyproject.toml uv.lock README.md ./
-RUN uv python install && \
-    uv sync --no-default-groups --no-install-project && \
+RUN uv sync --no-default-groups --no-install-project && \
     chown -R "${USER}:${USER}" "${VIRTUAL_ENV}" && \
     chown -R "${USER}:${USER}" "${APP_HOME}" && \
     uv pip list
