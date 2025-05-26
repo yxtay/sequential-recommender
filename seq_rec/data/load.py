@@ -55,6 +55,7 @@ def collate_tensor_fn(
     it = iter(batch)
     elem_size = next(it).size()
     if any(elem.size() != elem_size for elem in it):
+        it = iter(batch)
         if all(elem.size()[:-1] == elem_size[:-1] for elem in it):
             # only last dimension different
             return pad_tensors(batch, dim=-1)
