@@ -115,7 +115,7 @@ jobs:
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
-      - if: ${{ success() }}
+      - if: ${{ failure() }}
         run: |
           ${DOCKER_RUN_CMD} "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
         env:
