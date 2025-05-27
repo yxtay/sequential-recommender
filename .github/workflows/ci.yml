@@ -99,25 +99,25 @@ jobs:
 
       - if: ${{ success() || failure() }}
         run: |
-          "${DOCKER_RUN_CMD}" "${IMAGE_ID}" uv pip list
+          ${DOCKER_RUN_CMD} "${IMAGE_ID}" uv pip list
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ success() || failure() }}
         run: |
-          "${DOCKER_RUN_CMD}" "${IMAGE_ID}" uv run lightning fit --print_config
+          ${DOCKER_RUN_CMD} "${IMAGE_ID}" uv run lightning fit --print_config
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ success() || failure() }}
         run: |
-          "${DOCKER_RUN_CMD}" "${IMAGE_ID}" python -m "${PROJECT_NAME}.lightning"
+          ${DOCKER_RUN_CMD} "${IMAGE_ID}" python -m "${PROJECT_NAME}.lightning"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ success() }}
         run: |
-          "${DOCKER_RUN_CMD}" "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
+          ${DOCKER_RUN_CMD} "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
