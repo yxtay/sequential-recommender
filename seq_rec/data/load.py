@@ -29,6 +29,15 @@ def merge_examples(examples: tuple[dict[str, Any], ...]) -> dict[str, Any]:
     return merged
 
 
+def embed_example(example: dict[str, Any], *, model: torch.nn.Module) -> dict[str, Any]:
+    return {
+        **example,
+        "embedding": model(torch.as_tensor(example["embeddings"]).unsqueeze(0))
+        .squeeze(0)
+        .numpy(),
+    }
+
+
 def pad_tensors(
     batch: Iterable[torch.Tensor],
     dim: int = -1,

@@ -52,6 +52,12 @@ jobs:
         run: uv run pytest
 
       - if: ${{ success() || failure() }}
+        run: uv run lightning fit --print_config
+
+      - if: ${{ success() || failure() }}
+        run: uv run python -m "${PROJECT_NAME}.lightning"
+
+      - if: ${{ failure() }}
         run: uv run python -m "${PROJECT_NAME}.data.lightning"
 
       - if: ${{ failure() }}
@@ -65,9 +71,22 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GHCR_IMAGE_NAME: ghcr.io/${{ github.repository }}
+      HF_HOME: /tmp/huggingface
       PROJECT_NAME: seq_rec
+      DOCKER_RUN_CMD: docker run --mount type=bind,source=/tmp/huggingface,target=/tmp/huggingface -e "HF_HOME=/tmp/huggingface"
 
     steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          sparse-checkout: uv.lock
+
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
+        with:
+          path: ${{ env.HF_HOME }}
+          key: ${{ runner.os }}-huggingface-${{ hashFiles('**/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-huggingface-
+
       - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
 
       - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3
@@ -79,12 +98,23 @@ jobs:
           load: true
 
       - if: ${{ success() || failure() }}
-        run: docker run "${IMAGE_ID}" uv pip list
+        run: ${DOCKER_RUN_CMD} "${IMAGE_ID}" uv pip list
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ success() || failure() }}
-        run: docker run "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
+        run: ${DOCKER_RUN_CMD} "${IMAGE_ID}" uv run lightning fit --print_config
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+
+      - if: ${{ success() || failure() }}
+        run: ${DOCKER_RUN_CMD} "${IMAGE_ID}" python -m "${PROJECT_NAME}.lightning"
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+
+      - if: ${{ failure() }}
+        run: |
+          ${DOCKER_RUN_CMD} "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 

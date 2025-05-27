@@ -7,18 +7,18 @@ MLFLOW_DIR = "mlruns"
 # data
 TARGET_COL = "rating"
 ITEM_ID_COL = "movie_id"
-ITEM_JSON_COL = "movie_json"
+ITEM_TEXT_COL = "movie_text"
 ITEM_FEATURE_NAMES = ["title", "genres"]
 USER_ID_COL = "user_id"
-USER_JSON_COL = "user_json"
+USER_TEXT_COL = "user_text"
 USER_FEATURE_NAMES = ["gender", "age", "occupation", "zipcode"]
 
 # model
 ENCODER_MODEL_NAME = "BAAI/bge-small-en-v1.5"
-MAX_SEQ_LEN = 32
-BATCH_SIZE = 2**10
+BATCH_SIZE = 2**5
 EMBEDDING_DIM = 384
-PADDING_IDX = 0
+NUM_LAYERS = 3
+MAX_SEQ_LEN = 32
 METRIC = {"name": "val/RetrievalNormalizedDCG", "mode": "max"}
 TOP_K = 20
 
