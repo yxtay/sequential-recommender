@@ -83,7 +83,7 @@ def load_movies(src_dir: str = DATA_DIR) -> pl.LazyFrame:
         )
         .pipe(pl.from_pandas)
         .with_columns(genres=pl.col("genres").str.split("|"))
-        .with_columns(movie_json=pl.struct(ITEM_FEATURE_NAMES).struct.json_encode())
+        .with_columns(movie_text=pl.struct(ITEM_FEATURE_NAMES).struct.json_encode())
         .drop(*ITEM_FEATURE_NAMES)
     )
     logger.info("movies loaded: {}, shape: {}", movies_dat, movies.shape)
@@ -113,7 +113,7 @@ def load_users(src_dir: str = DATA_DIR) -> pl.LazyFrame:
             engine="python",
         )
         .pipe(pl.from_pandas)
-        .with_columns(user_json=pl.struct(USER_FEATURE_NAMES).struct.json_encode())
+        .with_columns(user_text=pl.struct(USER_FEATURE_NAMES).struct.json_encode())
         .drop(*USER_FEATURE_NAMES)
     )
     logger.info("users loaded: {}, shape: {}", users_dat, users.shape)
@@ -223,7 +223,7 @@ def process_ratings(
 def gather_history(ratings: pl.LazyFrame, *, path: pathlib.Path) -> pl.LazyFrame:
     ratings_history = (
         ratings.rolling("datetime", period="4w", closed="none", group_by="user_id")
-        .agg(history=pl.struct("datetime", "rating", "movie_id", "movie_json"))
+        .agg(history=pl.struct("datetime", "rating", "movie_id", "movie_text"))
         .unique(["user_id", "datetime"])
     )
     ratings_history = ratings.join(
@@ -276,10 +276,10 @@ def process_users(
         ratings.lazy()
         .group_by("user_id")
         .agg(
-            history=pl.struct("datetime", "rating", "movie_id", "movie_json").filter(
+            history=pl.struct("datetime", "rating", "movie_id", "movie_text").filter(
                 "is_train"
             ),
-            target=pl.struct("datetime", "rating", "movie_id", "movie_json").filter(
+            target=pl.struct("datetime", "rating", "movie_id", "movie_text").filter(
                 ~pl.col("is_train")
             ),
             is_train=pl.any("is_train"),

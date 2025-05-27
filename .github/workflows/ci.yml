@@ -52,6 +52,12 @@ jobs:
         run: uv run pytest
 
       - if: ${{ success() || failure() }}
+        run: uv run lightning fit --print_config
+
+      - if: ${{ success() || failure() }}
+        run: uv run python -m "${PROJECT_NAME}.lightning"
+
+      - if: ${{ failure() }}
         run: uv run python -m "${PROJECT_NAME}.data.lightning"
 
       - if: ${{ failure() }}
@@ -65,7 +71,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GHCR_IMAGE_NAME: ghcr.io/${{ github.repository }}
+      HF_HOME: /tmp/huggingface
       PROJECT_NAME: seq_rec
+      DOCKER_RUN_ARGS: -v ${HF_HOME}:${HF_HOME} -e HF_HOME=${HF_HOME}
 
     steps:
       - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
@@ -84,7 +92,17 @@ jobs:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ success() || failure() }}
-        run: docker run "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
+        run: docker run "${IMAGE_ID}" uv run lightning fit --print_config
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+
+      - if: ${{ success() || failure() }}
+        run: docker run "${DOCKER_RUN_ARGS}" "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+
+      - if: ${{ success() }}
+        run: docker run "${DOCKER_RUN_ARGS}" "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 

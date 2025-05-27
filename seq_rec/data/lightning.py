@@ -7,23 +7,20 @@ import os
 import pathlib
 from typing import TYPE_CHECKING, TypedDict
 
+import numpy as np
 import pydantic
 import torch
 import torch.utils.data as torch_data
 from lightning import LightningDataModule
 from sentence_transformers import SentenceTransformer
 
-from seq_rec.data.load import (
-    merge_examples,
-    nest_example,
-    select_fields,
-)
+from seq_rec.data.load import embed_example, merge_examples, nest_example, select_fields
 from seq_rec.params import (
     BATCH_SIZE,
     DATA_DIR,
     ENCODER_MODEL_NAME,
     ITEM_ID_COL,
-    ITEM_JSON_COL,
+    ITEM_TEXT_COL,
     ITEMS_TABLE_NAME,
     LANCE_DB_PATH,
     MAX_SEQ_LEN,
@@ -31,7 +28,7 @@ from seq_rec.params import (
     TARGET_COL,
     TOP_K,
     USER_ID_COL,
-    USER_JSON_COL,
+    USER_TEXT_COL,
     USERS_TABLE_NAME,
 )
 
@@ -50,6 +47,7 @@ if TYPE_CHECKING:
 
 class FeaturesType(TypedDict):
     idx: int | torch.Tensor
+    text: str | list[str]
     embedding: torch.Tensor
 
 
@@ -62,7 +60,7 @@ class BatchType(TypedDict):
 
 class FeaturesProcessor(pydantic.BaseModel):
     id_col: str
-    json_col: str
+    text_col: str
     lance_table_name: str
 
     encoder_model_name: str = ENCODER_MODEL_NAME
@@ -82,8 +80,8 @@ class FeaturesProcessor(pydantic.BaseModel):
     def embedding_dim(self: Self) -> int:
         return self.encoder.get_sentence_embedding_dimension()
 
-    def embed(self: Self, example: dict[str, Any]) -> torch.Tensor:
-        return self.encoder.encode(example[self.json_col], normalize_embeddings=True)
+    def embed(self: Self, example: dict[str, Any]) -> np.ndarray:
+        return self.encoder.encode([example[self.text_col]], normalize_embeddings=True)
 
     def process(self: Self, example: dict[str, Any]) -> FeaturesType:
         import xxhash
@@ -91,6 +89,7 @@ class FeaturesProcessor(pydantic.BaseModel):
         return {
             **example,
             "idx": xxhash.xxh32_intdigest(str(example[self.id_col])),
+            "text": example[self.text_col],
             "embeddings": self.embed(example),
         }
 
@@ -98,6 +97,10 @@ class FeaturesProcessor(pydantic.BaseModel):
         from seq_rec.data.load import torch_collate
 
         return torch_collate.default_collate(batch)
+
+    @property
+    def data_path(self: Self) -> str:
+        raise NotImplementedError
 
     def get_data(
         self: Self, subset: str, cycle: int = 1
@@ -135,13 +138,13 @@ class FeaturesProcessor(pydantic.BaseModel):
             .collate(collate_fn=self.collate)
         )
 
-    @functools.cached_property
+    @property
     def lance_db(self: Self) -> lancedb.DBConnection:
         import lancedb
 
         return lancedb.connect(self.lance_db_path)
 
-    @functools.cached_property
+    @property
     def lance_table(self: Self) -> lancedb.table.Table:
         return self.lance_db.open_table(self.lance_table_name)
 
@@ -156,7 +159,7 @@ class FeaturesProcessor(pydantic.BaseModel):
 
 class ItemsProcessor(FeaturesProcessor):
     id_col: str = ITEM_ID_COL
-    json_col: str = ITEM_JSON_COL
+    text_col: str = ITEM_TEXT_COL
     lance_table_name: str = ITEMS_TABLE_NAME
 
     num_partitions: int | None = None
@@ -164,16 +167,19 @@ class ItemsProcessor(FeaturesProcessor):
     num_probes: int = 8
     refine_factor: int = 4
 
-    @functools.cached_property
+    @property
     def data_path(self) -> str:
         return pathlib.Path(self.data_dir, "ml-1m", "movies.parquet").as_posix()
 
-    def get_index(self: Self, subset: str = "predict") -> lancedb.table.Table:
+    def get_index(
+        self: Self, model: torch.nn.Module, subset: str = "predict"
+    ) -> lancedb.table.Table:
         import pyarrow as pa
 
-        fields = [self.id_col, self.json_col, "embeddings"]
+        fields = [self.id_col, self.text_col, "embedding"]
         dp = (
             self.get_processed_data(subset)
+            .map(functools.partial(torch.inference_mode(embed_example), model=model))
             .map(functools.partial(select_fields, fields=fields))
             .batch(self.batch_size)
         )
@@ -181,7 +187,7 @@ class ItemsProcessor(FeaturesProcessor):
         batch = next(iter(dp))
         num_items = len(dp) * len(batch)
         example = batch[0]
-        (embedding_dim,) = example["embeddings"].shape
+        (embedding_dim,) = example["embedding"].shape
 
         # rule of thumb: nlist ~= 4 * sqrt(n_vectors)
         num_partitions = self.num_partitions or 2 ** int(math.log2(num_items) / 2)
@@ -196,8 +202,8 @@ class ItemsProcessor(FeaturesProcessor):
 
         schema = pa.RecordBatch.from_pylist(batch).schema
         schema = schema.set(
-            schema.get_field_index("embeddings"),
-            pa.field("embeddings", pa.list_(pa.float32(), embedding_dim)),
+            schema.get_field_index("embedding"),
+            pa.field("embedding", pa.list_(pa.float32(), embedding_dim)),
         )
 
         table = self.lance_db.create_table(
@@ -208,7 +214,7 @@ class ItemsProcessor(FeaturesProcessor):
         )
         table.create_scalar_index(self.id_col)
         table.create_index(
-            vector_column_name="embeddings",
+            vector_column_name="embedding",
             metric="cosine",
             num_partitions=num_partitions,
             num_sub_vectors=num_sub_vectors,
@@ -249,21 +255,21 @@ class ItemsProcessor(FeaturesProcessor):
 
 class UsersProcessor(FeaturesProcessor):
     id_col: str = USER_ID_COL
-    json_col: str = USER_JSON_COL
+    text_col: str = USER_TEXT_COL
     lance_table_name: str = USERS_TABLE_NAME
 
     items_processor: ItemsProcessor
     max_seq_len: int = MAX_SEQ_LEN
 
-    def embed(self: Self, example: dict[str, Any]) -> torch.Tensor:
-        history_json = (
-            item[self.items_processor.json_col] for item in example.get("history", [])
+    def embed(self: Self, example: dict[str, Any]) -> np.ndarray:
+        history_text = (
+            item[self.items_processor.text_col] for item in example.get("history", [])
         )
-        history_json = list(reversed([*history_json, example[self.json_col]]))
-        history_json = history_json[: self.max_seq_len]
-        return self.encoder.encode(history_json, normalize_embeddings=True)
+        history_text = list(reversed([*history_text, example[self.text_col]]))
+        history_text = history_text[: self.max_seq_len]
+        return self.encoder.encode(history_text, normalize_embeddings=True)
 
-    @functools.cached_property
+    @property
     def data_path(self) -> str:
         return pathlib.Path(self.data_dir, "ml-1m", "users.parquet").as_posix()
 
@@ -271,7 +277,7 @@ class UsersProcessor(FeaturesProcessor):
         import pyarrow.dataset as ds
         import pyarrow.parquet as pq
 
-        columns = [self.id_col, self.json_col, "history", "target"]
+        columns = [self.id_col, self.text_col, "history", "target"]
         filters = ds.field(f"is_{subset}")
         pa_table = pq.read_table(self.data_path, columns=columns, filters=filters)
 
@@ -470,7 +476,7 @@ class SeqRecDataModule(LightningDataModule):
 if __name__ == "__main__":
     import rich
 
-    dm = SeqRecDataModule(batch_size=4, num_workers=1)
+    dm = SeqRecDataModule()
     dm.prepare_data().head().collect().glimpse()
     dm.setup("fit")
 
@@ -497,7 +503,7 @@ if __name__ == "__main__":
     rich.print(dm.users_processor.get_activity(1, "history"))
     rich.print(dm.users_processor.get_activity(1, "target"))
 
-    dm.items_processor.get_index().search().to_polars().glimpse()
+    dm.items_processor.get_index(torch.squeeze).search().to_polars().glimpse()
     rich.print(dm.items_processor.get_id(1))
     query_vector = torch.rand(  # devskim: ignore DS148264
         dm.items_processor.embedding_dim
