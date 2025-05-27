@@ -14,7 +14,7 @@ USER_TEXT_COL = "user_text"
 USER_FEATURE_NAMES = ["gender", "age", "occupation", "zipcode"]
 
 # model
-ENCODER_MODEL_NAME = sentence-transformers/all-MiniLM-L6-v2"
+ENCODER_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 BATCH_SIZE = 2**5
 EMBEDDING_DIM = 384
 NUM_LAYERS = 3
