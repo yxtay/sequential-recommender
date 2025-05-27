@@ -73,7 +73,7 @@ jobs:
       GHCR_IMAGE_NAME: ghcr.io/${{ github.repository }}
       HF_HOME: /tmp/huggingface
       PROJECT_NAME: seq_rec
-      DOCKER_RUN_ARGS: -v /tmp/huggingface:/tmp/huggingface -e HF_HOME=/tmp/huggingface
+      DOCKER_RUN_ARGS: -v "/tmp/huggingface:/tmp/huggingface" -e "HF_HOME=/tmp/huggingface"
 
     steps:
       - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3

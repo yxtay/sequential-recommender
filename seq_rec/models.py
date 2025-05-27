@@ -30,7 +30,7 @@ def to_sentence_transformer(
 
 
 class PoolingTransformer(torch.nn.Module):
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         *,
         model_name_or_path: str | None = None,

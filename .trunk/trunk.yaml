@@ -16,11 +16,12 @@ runtimes:
     - python@3.10.8
 # This is the section where you manage your linters. (https://docs.trunk.io/check/configuration)
 lint:
+  disabled:
+    - black
   enabled:
     - actionlint@1.7.7
     - bandit@1.8.3
     - biome@1.9.4
-    - black@25.1.0
     - checkov@3.2.432
     - git-diff-check
     - hadolint@2.12.1-beta
