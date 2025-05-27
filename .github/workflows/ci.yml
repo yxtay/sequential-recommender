@@ -73,7 +73,7 @@ jobs:
       GHCR_IMAGE_NAME: ghcr.io/${{ github.repository }}
       HF_HOME: /tmp/huggingface
       PROJECT_NAME: seq_rec
-      DOCKER_RUN_ARGS: -v ${HF_HOME}:${HF_HOME} -e HF_HOME=${HF_HOME}
+      DOCKER_RUN_ARGS: -v /tmp/huggingface:/tmp/huggingface -e HF_HOME=/tmp/huggingface
 
     steps:
       - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
@@ -95,6 +95,18 @@ jobs:
         run: docker run "${IMAGE_ID}" uv run lightning fit --print_config
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
+
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          sparse-checkout: |
+            uv.lock
+
+      - uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4
+        with:
+          path: ${{ env.HF_HOME }}
+          key: ${{ runner.os }}-huggingface-${{ hashFiles('**/uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-huggingface-
 
       - if: ${{ success() || failure() }}
         run: docker run "${DOCKER_RUN_ARGS}" "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
