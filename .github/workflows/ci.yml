@@ -73,7 +73,7 @@ jobs:
       GHCR_IMAGE_NAME: ghcr.io/${{ github.repository }}
       HF_HOME: /tmp/huggingface
       PROJECT_NAME: seq_rec
-      DOCKER_RUN_ARGS: -v "/tmp/huggingface:/tmp/huggingface" -e "HF_HOME=/tmp/huggingface"
+      DOCKER_RUN_CMD: --mount type=bind,source=/tmp/huggingface,target=/tmp/huggingface -e "HF_HOME=/tmp/huggingface"
 
     steps:
       - uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3
@@ -87,12 +87,12 @@ jobs:
           load: true
 
       - if: ${{ success() || failure() }}
-        run: docker run "${IMAGE_ID}" uv pip list
+        run: ${DOCKER_RUN_CMD} ${IMAGE_ID} uv pip list
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ success() || failure() }}
-        run: docker run "${IMAGE_ID}" uv run lightning fit --print_config
+        run: ${DOCKER_RUN_CMD} ${IMAGE_ID} uv run lightning fit --print_config
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
@@ -109,12 +109,12 @@ jobs:
             ${{ runner.os }}-huggingface-
 
       - if: ${{ success() || failure() }}
-        run: docker run "${DOCKER_RUN_ARGS}" "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
+        run: ${DOCKER_RUN_CMD} ${IMAGE_ID} python -m "${PROJECT_NAME}.data.prepare"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ success() }}
-        run: docker run "${DOCKER_RUN_ARGS}" "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
+        run: ${DOCKER_RUN_CMD} ${IMAGE_ID} python -m "${PROJECT_NAME}.data.prepare"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
