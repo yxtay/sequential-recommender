@@ -467,7 +467,7 @@ if __name__ == "__main__":
     model.configure_model()
 
     with torch.inference_mode():
-        rich.print(model(*model.example_input_array))
+        rich.print(model(model.example_input_array))
         rich.print(model.compute_losses(next(iter(datamodule.train_dataloader()))))
 
     trainer_args = {
