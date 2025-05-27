@@ -33,16 +33,17 @@ def pad_tensors(
     batch: Iterable[torch.Tensor],
     dim: int = -1,
     *,
-    pad_left: bool = False,
+    pad_start: bool = False,
     pad_value: int = 0,
 ) -> torch.Tensor:
     elem = next(iter(batch))
     pad_size = max(example.size(dim) for example in iter(batch))
     pad = [0] * (elem.dim() * 2)
-    pad_dim = 2 * dim + (not pad_left)
+    pad_dim = 2 * dim + pad_start
 
     def pad_tensor(tensor: torch.Tensor) -> torch.Tensor:
-        pad[-pad_dim] = pad_size - tensor.size(dim)
+        # pad tuple dimensions is reversed
+        pad[-pad_dim - 1] = pad_size - tensor.size(dim)
         return F.pad(tensor, pad, value=pad_value)
 
     return torch.stack([pad_tensor(example) for example in batch])
@@ -54,6 +55,7 @@ def collate_tensor_fn(
     it = iter(batch)
     elem_size = next(it).size()
     if any(elem.size() != elem_size for elem in it):
+        it = iter(batch)
         if all(elem.size()[:-1] == elem_size[:-1] for elem in it):
             # only last dimension different
             return pad_tensors(batch, dim=-1)

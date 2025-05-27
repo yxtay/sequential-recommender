@@ -6,15 +6,16 @@ MLFLOW_DIR = "mlruns"
 
 # data
 TARGET_COL = "rating"
-USER_ID_COL = "user_id"
-USER_JSON_COL = "user_json"
-USER_FEATURE_NAMES = ["gender", "age", "occupation", "zipcode"]
 ITEM_ID_COL = "movie_id"
 ITEM_JSON_COL = "movie_json"
 ITEM_FEATURE_NAMES = ["title", "genres"]
+USER_ID_COL = "user_id"
+USER_JSON_COL = "user_json"
+USER_FEATURE_NAMES = ["gender", "age", "occupation", "zipcode"]
 
 # model
 ENCODER_MODEL_NAME = "BAAI/bge-small-en-v1.5"
+MAX_SEQ_LEN = 32
 BATCH_SIZE = 2**10
 EMBEDDING_DIM = 384
 PADDING_IDX = 0

@@ -21,12 +21,12 @@ from seq_rec.data.load import (
 from seq_rec.params import (
     BATCH_SIZE,
     DATA_DIR,
-    EMBEDDING_DIM,
     ENCODER_MODEL_NAME,
     ITEM_ID_COL,
     ITEM_JSON_COL,
     ITEMS_TABLE_NAME,
     LANCE_DB_PATH,
+    MAX_SEQ_LEN,
     MOVIELENS_1M_URL,
     TARGET_COL,
     TOP_K,
@@ -77,6 +77,10 @@ class FeaturesProcessor(pydantic.BaseModel):
             self.encoder_model_name,
             device="cuda" if torch.cuda.is_available() else "cpu",
         )
+
+    @property
+    def embedding_dim(self: Self) -> int:
+        return self.encoder.get_sentence_embedding_dimension()
 
     def embed(self: Self, example: dict[str, Any]) -> torch.Tensor:
         return self.encoder.encode(example[self.json_col], normalize_embeddings=True)
@@ -249,12 +253,14 @@ class UsersProcessor(FeaturesProcessor):
     lance_table_name: str = USERS_TABLE_NAME
 
     items_processor: ItemsProcessor
+    max_seq_len: int = MAX_SEQ_LEN
 
     def embed(self: Self, example: dict[str, Any]) -> torch.Tensor:
         history_json = (
             item[self.items_processor.json_col] for item in example.get("history", [])
         )
         history_json = list(reversed([*history_json, example[self.json_col]]))
+        history_json = history_json[: self.max_seq_len]
         return self.encoder.encode(history_json, normalize_embeddings=True)
 
     @functools.cached_property
@@ -493,9 +499,7 @@ if __name__ == "__main__":
 
     dm.items_processor.get_index().search().to_polars().glimpse()
     rich.print(dm.items_processor.get_id(1))
-    rich.print(
-        dm.items_processor.search(
-            torch.rand(EMBEDDING_DIM).numpy(),  # devskim: ignore DS148264
-            top_k=5,
-        )
-    )
+    query_vector = torch.rand(  # devskim: ignore DS148264
+        dm.items_processor.embedding_dim
+    ).numpy()
+    rich.print(dm.items_processor.search(query_vector, top_k=5))
