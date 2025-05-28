@@ -96,7 +96,9 @@ class Embedder:
     @logger.catch(reraise=True)
     @torch.inference_mode()
     def embed(self, query: Query) -> Query:
-        inputs_embeds = torch.as_tensor(query.inputs_embeds).unsqueeze(0)
+        inputs_embeds = torch.as_tensor(
+            query.inputs_embeds, device=self.model.device
+        ).unsqueeze(0)
         attention_mask = (inputs_embeds != 0).any(dim=-1).short()
         features = {"inputs_embeds": inputs_embeds, "attention_mask": attention_mask}
 

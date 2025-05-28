@@ -43,7 +43,7 @@ class PoolingTransformer(torch.nn.Module):
         super().__init__()
 
         if model_name_or_path:
-            self.model = SentenceTransformer(model_name_or_path, device="cpu")
+            self.model = SentenceTransformer(model_name_or_path)
             return
 
         model = self.init_model(

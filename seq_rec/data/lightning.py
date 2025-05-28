@@ -71,10 +71,7 @@ class FeaturesProcessor(pydantic.BaseModel):
 
     @functools.cached_property
     def encoder(self) -> SentenceTransformer:
-        return SentenceTransformer(
-            self.encoder_name,
-            device="cuda" if torch.cuda.is_available() else "cpu",
-        )
+        return SentenceTransformer(self.encoder_name)
 
     @property
     def embedding_dim(self) -> int:

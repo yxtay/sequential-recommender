@@ -64,7 +64,7 @@ class SeqRecLitModule(LightningModule):
             msg = "`model` must be initialised first"
             raise ValueError(msg)
 
-        return self.model(inputs_embeds=inputs_embeds)
+        return self.model(inputs_embeds=inputs_embeds.to(self.device))
 
     @torch.inference_mode()
     def recommend(
@@ -398,7 +398,6 @@ def cli_main(
     }
     progress_bar = lazy_instance(lp_callbacks.RichProgressBar)
     trainer_defaults = {
-        "accelerator": "cpu",
         "precision": "bf16-mixed",
         "logger": [tensorboard_logger, mlflow_logger],
         "callbacks": [progress_bar],
