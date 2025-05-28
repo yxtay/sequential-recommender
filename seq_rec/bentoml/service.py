@@ -46,8 +46,7 @@ class Query(bentoml.IODescriptor):
     text: str = ""
     inputs_embeds: Annotated[npt.NDArray[np.float32], DType("float32")] | None = None
     embedding: (
-        Annotated[npt.NDArray[np.float32], Shape((1, EMBEDDING_DIM)), DType("float32")]
-        | None
+        Annotated[torch.Tensor, Shape((1, EMBEDDING_DIM)), DType("float32")] | None
     ) = None
 
 
@@ -96,18 +95,11 @@ class Embedder:
     @logger.catch(reraise=True)
     @torch.inference_mode()
     def embed(self, query: Query) -> Query:
-        attention_mask = (query.inputs_embeds != 0).any(dim=-1).short()
-        features = {
-            "inputs_embeds": query.inputs_embeds,
-            "attention_mask": attention_mask,
-        }
-        query.embedding = self.model(features)["sentence_embedding"]
-        return query
-
-    def forward(self, inputs_embeds: torch.Tensor) -> torch.Tensor:
+        inputs_embeds = torch.as_tensor(query.inputs_embeds)
         attention_mask = (inputs_embeds != 0).any(dim=-1).short()
         features = {"inputs_embeds": inputs_embeds, "attention_mask": attention_mask}
-        return self.model(features)["sentence_embedding"]
+        query.embedding = self.model(features)["sentence_embedding"]
+        return query
 
 
 @bentoml.service()

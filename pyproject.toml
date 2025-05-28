@@ -20,18 +20,16 @@ dependencies = [
   "lancedb>=0.19,<1.0",
   "lightning~=2.5",
   "loguru>=0.7,<1.0",
-  "mlflow~=2.19",
-  "pandas~=2.2",
+  "mlflow-skinny~=2.19",
   "polars[pandas]~=1.19",
   "pylance>=0.25,<1.0",
   "sentence-transformers[onnx]~=4.1",
-  "tensorboard~=2.18",
   "torch~=2.5",
   "xxhash~=3.4",
 ]
 
 [dependency-groups]
-dev = ["pytest~=8.3"]
+dev = ["mlflow~=2.19", "pytest~=8.3", "tensorboard~=2.18"]
 
 [project.scripts]
 data = "seq_rec.data.prepare:main"
