@@ -3123,7 +3123,7 @@ dev = [
     { name = "mlflow", specifier = "~=2.19" },
     { name = "pytest", specifier = "~=8.3" },
     { name = "ray", extras = ["train", "tune"], specifier = "~=2.42" },
-    { name = "standard-imghdr", specifier = ">=3.13.0" },
+    { name = "standard-imghdr", specifier = "~=3.13.0" },
 ]
 
 [[package]]
