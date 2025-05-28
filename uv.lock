@@ -2747,6 +2747,7 @@ dependencies = [
     { name = "polars", extra = ["pandas"] },
     { name = "pylance" },
     { name = "sentence-transformers", extra = ["onnx"] },
+    { name = "tensorboard" },
     { name = "torch", version = "2.7.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
     { name = "torch", version = "2.7.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
     { name = "xxhash" },
@@ -2758,7 +2759,6 @@ dev = [
     { name = "mlflow" },
     { name = "pytest" },
     { name = "ray", extra = ["train", "tune"] },
-    { name = "tensorboard" },
 ]
 
 [package.metadata]
@@ -2773,6 +2773,7 @@ requires-dist = [
     { name = "polars", extras = ["pandas"], specifier = "~=1.19" },
     { name = "pylance", specifier = ">=0.25,<1.0" },
     { name = "sentence-transformers", extras = ["onnx"], specifier = "~=4.1" },
+    { name = "tensorboard", specifier = "~=2.18" },
     { name = "torch", marker = "sys_platform != 'linux'", specifier = "~=2.5" },
     { name = "torch", marker = "sys_platform == 'linux'", specifier = "~=2.5", index = "https://download.pytorch.org/whl/cpu" },
     { name = "xxhash", specifier = "~=3.4" },
@@ -2784,7 +2785,6 @@ dev = [
     { name = "mlflow", specifier = "~=2.19" },
     { name = "pytest", specifier = "~=8.3" },
     { name = "ray", extras = ["train", "tune"], specifier = "~=2.42" },
-    { name = "tensorboard", specifier = "~=2.18" },
 ]
 
 [[package]]

@@ -23,6 +23,7 @@ dependencies = [
   "polars[pandas]~=1.19",
   "pylance>=0.25,<1.0",
   "sentence-transformers[onnx]~=4.1",
+  "tensorboard~=2.18",
   "torch~=2.5",
   "xxhash~=3.4",
 ]
@@ -33,7 +34,6 @@ dev = [
   "mlflow~=2.19",
   "pytest~=8.3",
   "ray[train,tune]~=2.42",
-  "tensorboard~=2.18",
 ]
 
 [project.scripts]
