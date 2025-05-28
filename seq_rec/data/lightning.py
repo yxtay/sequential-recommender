@@ -18,7 +18,7 @@ from seq_rec.data.load import embed_example, merge_examples, nest_example, selec
 from seq_rec.params import (
     BATCH_SIZE,
     DATA_DIR,
-    ENCODER_MODEL_NAME,
+    ENCODER_NAME,
     ITEM_ID_COL,
     ITEM_TEXT_COL,
     ITEMS_TABLE_NAME,
@@ -34,7 +34,7 @@ from seq_rec.params import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Any, Self, TypeVar
+    from typing import Any, TypeVar
 
     import lancedb
     import numpy as np
@@ -63,27 +63,27 @@ class FeaturesProcessor(pydantic.BaseModel):
     text_col: str
     lance_table_name: str
 
-    encoder_model_name: str = ENCODER_MODEL_NAME
+    encoder_name: str = ENCODER_NAME
     batch_size: int = BATCH_SIZE
 
     data_dir: str = DATA_DIR
     lance_db_path: str = LANCE_DB_PATH
 
     @functools.cached_property
-    def encoder(self: Self) -> SentenceTransformer:
+    def encoder(self) -> SentenceTransformer:
         return SentenceTransformer(
-            self.encoder_model_name,
+            self.encoder_name,
             device="cuda" if torch.cuda.is_available() else "cpu",
         )
 
     @property
-    def embedding_dim(self: Self) -> int:
+    def embedding_dim(self) -> int:
         return self.encoder.get_sentence_embedding_dimension()
 
-    def embed(self: Self, example: dict[str, Any]) -> np.ndarray:
+    def embed(self, example: dict[str, Any]) -> npt.NDArray[np.float64]:
         return self.encoder.encode([example[self.text_col]], normalize_embeddings=True)
 
-    def process(self: Self, example: dict[str, Any]) -> FeaturesType:
+    def process(self, example: dict[str, Any]) -> FeaturesType:
         import xxhash
 
         return {
@@ -93,17 +93,17 @@ class FeaturesProcessor(pydantic.BaseModel):
             "embeddings": self.embed(example),
         }
 
-    def collate(self: Self, batch: list[FeaturesType]) -> FeaturesType:
+    def collate(self, batch: list[FeaturesType]) -> FeaturesType:
         from seq_rec.data.load import torch_collate
 
         return torch_collate.default_collate(batch)
 
     @property
-    def data_path(self: Self) -> str:
+    def data_path(self) -> str:
         raise NotImplementedError
 
     def get_data(
-        self: Self, subset: str, cycle: int = 1
+        self, subset: str, cycle: int = 1
     ) -> torch_data.IterDataPipe[FeaturesType]:
         import pyarrow.dataset as ds
 
@@ -123,12 +123,12 @@ class FeaturesProcessor(pydantic.BaseModel):
         )
 
     def get_processed_data(
-        self: Self, subset: str, cycle: int = 1
+        self, subset: str, cycle: int = 1
     ) -> torch_data.IterDataPipe[FeaturesType]:
         return self.get_data(subset, cycle=cycle).map(self.process)
 
     def get_batch_data(
-        self: Self, subset: str, cycle: int | None = 1
+        self, subset: str, cycle: int | None = 1
     ) -> torch_data.IterDataPipe[FeaturesType]:
         fields = ["idx", "embeddings"]
         return (
@@ -139,16 +139,16 @@ class FeaturesProcessor(pydantic.BaseModel):
         )
 
     @property
-    def lance_db(self: Self) -> lancedb.DBConnection:
+    def lance_db(self) -> lancedb.DBConnection:
         import lancedb
 
         return lancedb.connect(self.lance_db_path)
 
     @property
-    def lance_table(self: Self) -> lancedb.table.Table:
+    def lance_table(self) -> lancedb.table.Table:
         return self.lance_db.open_table(self.lance_table_name)
 
-    def get_id(self: Self, id_val: int | None) -> dict[str, Any]:
+    def get_id(self, id_val: int | None) -> dict[str, Any]:
         if id_val is None:
             return {}
         result = self.lance_table.search().where(f"{self.id_col} = {id_val}").to_list()
@@ -172,7 +172,7 @@ class ItemsProcessor(FeaturesProcessor):
         return pathlib.Path(self.data_dir, "ml-1m", "movies.parquet").as_posix()
 
     def get_index(
-        self: Self, model: torch.nn.Module, subset: str = "predict"
+        self, model: torch.nn.Module, subset: str = "predict"
     ) -> lancedb.table.Table:
         import pyarrow as pa
 
@@ -229,7 +229,7 @@ class ItemsProcessor(FeaturesProcessor):
         return table
 
     def search(
-        self: Self,
+        self,
         embedding: npt.NDArray[np.float64],
         exclude_item_ids: list[int] | None = None,
         top_k: int = TOP_K,
@@ -261,7 +261,7 @@ class UsersProcessor(FeaturesProcessor):
     items_processor: ItemsProcessor
     max_seq_len: int = MAX_SEQ_LEN
 
-    def embed(self: Self, example: dict[str, Any]) -> np.ndarray:
+    def embed(self, example: dict[str, Any]) -> npt.NDArray[np.float64]:
         history_text = (
             item[self.items_processor.text_col] for item in example.get("history", [])
         )
@@ -273,7 +273,7 @@ class UsersProcessor(FeaturesProcessor):
     def data_path(self) -> str:
         return pathlib.Path(self.data_dir, "ml-1m", "users.parquet").as_posix()
 
-    def get_index(self: Self, subset: str = "predict") -> lancedb.table.Table:
+    def get_index(self, subset: str = "predict") -> lancedb.table.Table:
         import pyarrow.dataset as ds
         import pyarrow.parquet as pq
 
@@ -292,9 +292,7 @@ class UsersProcessor(FeaturesProcessor):
         )
         return table
 
-    def get_activity(
-        self: Self, id_val: int | None, activity_name: str
-    ) -> dict[int, int]:
+    def get_activity(self, id_val: int | None, activity_name: str) -> dict[int, int]:
         activity = self.get_id(id_val).get(activity_name, {})
         return {item[ITEM_ID_COL]: item[TARGET_COL] for item in activity}
 
@@ -307,7 +305,7 @@ class InteractionsProcessor(pydantic.BaseModel):
     batch_size: int = BATCH_SIZE
     data_dir: str = DATA_DIR
 
-    def process(self: Self, example: dict[str, Any]) -> BatchType:
+    def process(self, example: dict[str, Any]) -> BatchType:
         fields = ["idx", "embeddings"]
         user_features = select_fields(
             self.users_processor.process(example), fields=fields
@@ -318,7 +316,7 @@ class InteractionsProcessor(pydantic.BaseModel):
         target = example[self.target_col]
         return {"target": target, "user": user_features, "item": item_features}
 
-    def collate(self: Self, batch: list[BatchType]) -> BatchType:
+    def collate(self, batch: list[BatchType]) -> BatchType:
         import torch.utils.data._utils.collate as torch_collate
 
         target = torch_collate.default_collate([example["target"] for example in batch])
@@ -329,9 +327,7 @@ class InteractionsProcessor(pydantic.BaseModel):
         )
         return {"target": target, "user": user, "item": item, "neg_item": neg_item}
 
-    def get_processed_data(
-        self: Self, subset: str
-    ) -> torch_data.IterDataPipe[BatchType]:
+    def get_processed_data(self, subset: str) -> torch_data.IterDataPipe[BatchType]:
         import pyarrow.dataset as ds
 
         from seq_rec.data.load import ParquetDictLoaderIterDataPipe
@@ -358,9 +354,7 @@ class InteractionsProcessor(pydantic.BaseModel):
             .map(merge_examples)
         )
 
-    def get_batch_data(
-        self: Self, subset: str
-    ) -> torch_data.IterDataPipe[FeaturesType]:
+    def get_batch_data(self, subset: str) -> torch_data.IterDataPipe[FeaturesType]:
         return (
             self.get_processed_data(subset)
             .batch(self.batch_size)
@@ -370,7 +364,7 @@ class InteractionsProcessor(pydantic.BaseModel):
 
 class SeqRecDataModule(LightningDataModule):
     def __init__(  # noqa: PLR0913
-        self: Self,
+        self,
         data_dir: str = DATA_DIR,
         batch_size: int = BATCH_SIZE,
         num_partitions: int | None = None,
@@ -402,7 +396,7 @@ class SeqRecDataModule(LightningDataModule):
             data_dir=data_dir,
         )
 
-    def prepare_data(self: Self, *, overwrite: bool = False) -> pl.LazyFrame:
+    def prepare_data(self, *, overwrite: bool = False) -> pl.LazyFrame:
         from filelock import FileLock
 
         from seq_rec.data.prepare import (
@@ -415,7 +409,7 @@ class SeqRecDataModule(LightningDataModule):
             download_unpack_data(MOVIELENS_1M_URL, data_dir, overwrite=overwrite)
             return prepare_movielens(data_dir, overwrite=overwrite)
 
-    def setup(self: Self, stage: str) -> None:
+    def setup(self, stage: str) -> None:
         if stage == "fit":
             self.train_data = self.interactions_processor.get_processed_data("train")
 
@@ -429,7 +423,7 @@ class SeqRecDataModule(LightningDataModule):
             self.predict_data = self.users_processor.get_processed_data("predict")
 
     def get_dataloader(
-        self: Self,
+        self,
         dataset: torch_data.Dataset[T],
         *,
         batch_size: int | None = None,
@@ -454,7 +448,7 @@ class SeqRecDataModule(LightningDataModule):
             persistent_workers=num_workers > 0,
         )
 
-    def train_dataloader(self: Self) -> torch_data.DataLoader[BatchType]:
+    def train_dataloader(self) -> torch_data.DataLoader[BatchType]:
         batch_size = self.hparams.get("batch_size")
         return self.get_dataloader(
             self.train_data,
@@ -463,13 +457,13 @@ class SeqRecDataModule(LightningDataModule):
             shuffle=True,
         )
 
-    def val_dataloader(self: Self) -> torch_data.DataLoader[FeaturesType]:
+    def val_dataloader(self) -> torch_data.DataLoader[FeaturesType]:
         return self.get_dataloader(self.val_data)
 
-    def test_dataloader(self: Self) -> torch_data.DataLoader[FeaturesType]:
+    def test_dataloader(self) -> torch_data.DataLoader[FeaturesType]:
         return self.get_dataloader(self.test_data)
 
-    def predict_dataloader(self: Self) -> torch_data.DataLoader[FeaturesType]:
+    def predict_dataloader(self) -> torch_data.DataLoader[FeaturesType]:
         return self.get_dataloader(self.predict_data)
 
 

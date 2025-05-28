@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import torch
 from sentence_transformers import SentenceTransformer, models
-from transformers import BertConfig, BertModel
+from transformers.models.bert import BertConfig, BertModel
 
 if TYPE_CHECKING:
     from transformers.modeling_utils import PreTrainedModel

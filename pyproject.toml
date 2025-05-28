@@ -24,15 +24,14 @@ dependencies = [
   "pandas~=2.2",
   "polars[pandas]~=1.19",
   "pylance>=0.25,<1.0",
-  "sentence-transformers~=4.1",
+  "sentence-transformers[onnx]~=4.1",
   "tensorboard~=2.18",
   "torch~=2.5",
-  "transformers~=4.52",
   "xxhash~=3.4",
 ]
 
 [dependency-groups]
-dev = ["onnxruntime~=1.20", "onnxscript>=0.2,<1.0", "pytest~=8.3"]
+dev = ["pytest~=8.3"]
 
 [project.scripts]
 data = "seq_rec.data.prepare:main"

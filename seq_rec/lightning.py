@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import pathlib
+import shutil
 from typing import TYPE_CHECKING
 
 import lightning.pytorch.callbacks as lp_callbacks
@@ -10,22 +12,17 @@ from lightning import LightningModule
 from lightning.fabric.utilities.rank_zero import rank_zero_only
 from lightning.pytorch.cli import LightningCLI, SaveConfigCallback
 
-from seq_rec.data.lightning import BatchType, FeaturesType
+from seq_rec.data.lightning import BatchType
 from seq_rec.params import (
     EMBEDDING_DIM,
-    EXPORTED_PROGRAM_PATH,
     MAX_SEQ_LEN,
     METRIC,
     NUM_LAYERS,
-    ONNX_PROGRAM_PATH,
-    SCRIPT_MODULE_PATH,
     TARGET_COL,
     TOP_K,
 )
 
 if TYPE_CHECKING:
-    from typing import Self
-
     import pandas as pd
     import torchmetrics
     from lightning import Callback, Trainer
@@ -38,7 +35,7 @@ if TYPE_CHECKING:
 
 class SeqRecLitModule(LightningModule):
     def __init__(  # noqa: PLR0913
-        self: Self,
+        self,
         *,
         embedding_dim: int = EMBEDDING_DIM,  # noqa: ARG002
         num_layers: int = NUM_LAYERS,  # noqa: ARG002
@@ -62,10 +59,7 @@ class SeqRecLitModule(LightningModule):
         self.users_processor: UsersProcessor | None = None
         self.items_processor: ItemsProcessor | None = None
 
-    def forward(
-        self: Self,
-        inputs_embeds: torch.Tensor,
-    ) -> torch.Tensor:
+    def forward(self, inputs_embeds: torch.Tensor) -> torch.Tensor:
         if self.model is None:
             msg = "`model` must be initialised first"
             raise ValueError(msg)
@@ -74,7 +68,7 @@ class SeqRecLitModule(LightningModule):
 
     @torch.inference_mode()
     def recommend(
-        self: Self,
+        self,
         inputs_embeds: torch.Tensor,
         *,
         top_k: int = TOP_K,
@@ -94,7 +88,7 @@ class SeqRecLitModule(LightningModule):
         ).drop(columns="embedding")
 
     def compute_losses(
-        self: Self, batch: BatchType, step_name: str = "train"
+        self, batch: BatchType, step_name: str = "train"
     ) -> dict[str, torch.Tensor]:
         if self.loss_fns is None:
             msg = "`loss_fns` must be initialised first"
@@ -146,7 +140,7 @@ class SeqRecLitModule(LightningModule):
         return losses
 
     def update_metrics(
-        self: Self, example: dict[str, torch.Tensor], step_name: str = "train"
+        self, example: dict[str, torch.Tensor], step_name: str = "train"
     ) -> torchmetrics.MetricCollection:
         import torchmetrics.retrieval as tm_retrieval
 
@@ -181,30 +175,26 @@ class SeqRecLitModule(LightningModule):
                 metric.update(preds=preds, target=target > 0, indexes=indexes)
         return metrics
 
-    def training_step(
-        self: Self, batch: tuple[BatchType, FeaturesType], _: int
-    ) -> torch.Tensor:
+    def training_step(self, batch: BatchType, _: int) -> torch.Tensor:
         losses = self.compute_losses(batch, step_name="train")
         self.log_dict(losses)
         return losses[f"train/{self.hparams.train_loss}"]
 
-    def validation_step(self: Self, batch: dict[str, torch.Tensor], _: int) -> None:
+    def validation_step(self, batch: dict[str, torch.Tensor], _: int) -> None:
         metrics = self.update_metrics(batch, step_name="val")
         self.log_dict(metrics)
 
-    def test_step(self: Self, batch: dict[str, torch.Tensor], _: int) -> None:  # noqa: PT019
+    def test_step(self, batch: dict[str, torch.Tensor], _: int) -> None:  # noqa: PT019
         metrics = self.update_metrics(batch, step_name="test")
         self.log_dict(metrics)
 
-    def predict_step(
-        self: Self, batch: dict[str, torch.Tensor], _: int
-    ) -> pd.DataFrame:
+    def predict_step(self, batch: dict[str, torch.Tensor], _: int) -> pd.DataFrame:
         user_id_col = self.trainer.datamodule.users_processor.id_col
         return self.recommend(
             batch["embeddings"], top_k=self.hparams.top_k, user_id=batch[user_id_col]
         )
 
-    def on_train_start(self: Self) -> None:
+    def on_train_start(self) -> None:
         if self.metrics is None:
             msg = "`metrics` must be initialised first"
             raise ValueError(msg)
@@ -222,26 +212,22 @@ class SeqRecLitModule(LightningModule):
                 # reset mlflow run status to "RUNNING"
                 logger.experiment.update_run(logger.run_id, status="RUNNING")
 
-    def on_validation_start(self: Self) -> None:
+    def on_validation_start(self) -> None:
         self.users_processor = self.trainer.datamodule.users_processor
         self.users_processor.get_index()
         self.items_processor = self.trainer.datamodule.items_processor
         self.items_processor.get_index(self)
 
-    def on_test_start(self: Self) -> None:
+    def on_test_start(self) -> None:
         self.on_validation_start()
 
-    def on_predict_start(self: Self) -> None:
+    def on_predict_start(self) -> None:
         self.on_validation_start()
 
-    def configure_optimizers(self: Self) -> torch.optim.Optimizer:
-        if self.model is None:
-            msg = "`model` must be initialised first"
-            raise ValueError(msg)
-
+    def configure_optimizers(self) -> torch.optim.Optimizer:
         return torch.optim.AdamW(self.parameters(), lr=self.hparams.learning_rate)
 
-    def configure_callbacks(self: Self) -> list[Callback]:
+    def configure_callbacks(self) -> list[Callback]:
         checkpoint = lp_callbacks.ModelCheckpoint(
             monitor=METRIC["name"], mode=METRIC["mode"]
         )
@@ -250,7 +236,7 @@ class SeqRecLitModule(LightningModule):
         )
         return [checkpoint, early_stop]
 
-    def configure_model(self: Self) -> None:
+    def configure_model(self) -> None:
         if self.model is None:
             self.model = self.get_model()
             # self.compile()
@@ -259,7 +245,7 @@ class SeqRecLitModule(LightningModule):
         if self.metrics is None:
             self.metrics = self.get_metrics()
 
-    def get_model(self: Self) -> torch.nn.Module:
+    def get_model(self) -> torch.nn.Module:
         from seq_rec.models import PoolingTransformer
 
         return PoolingTransformer(
@@ -270,7 +256,7 @@ class SeqRecLitModule(LightningModule):
             pooling_mode=self.hparams.pooling_mode,
         )
 
-    def get_loss_fns(self: Self) -> torch.nn.ModuleList:
+    def get_loss_fns(self) -> torch.nn.ModuleList:
         import seq_rec.losses as mf_losses
 
         loss_classes = [
@@ -294,7 +280,7 @@ class SeqRecLitModule(LightningModule):
         ]
         return torch.nn.ModuleList(loss_fns)
 
-    def get_metrics(self: Self) -> torch.nn.ModuleDict:
+    def get_metrics(self) -> torch.nn.ModuleDict:
         import torchmetrics
         import torchmetrics.retrieval as tm_retrieval
 
@@ -314,56 +300,33 @@ class SeqRecLitModule(LightningModule):
         return torch.nn.ModuleDict(metrics)
 
     @property
-    def example_input_array(self: Self) -> torch.Tensor:
+    def example_input_array(self) -> tuple[torch.Tensor]:
         zeros = torch.zeros(
             1, self.hparams.embedding_dim, dtype=self.dtype, device=self.device
         )
         rand = torch.rand_like(zeros)  # devskim: ignore DS148264
-        return torch.stack([zeros, rand])
+        return (torch.stack([zeros, rand]),)
 
-    def export_torchscript(
-        self: Self, path: str | None = None
-    ) -> torch.jit.ScriptModule:
-        script_module = torch.jit.script(self.model.eval())  # devskim: ignore DS189424
+    def save(self, path: str | pathlib.Path) -> None:
+        from seq_rec.params import (
+            CHECKPOINT_PATH,
+            LANCE_DB_PATH,
+            PROCESSORS_JSON,
+            TRANSFORMER_PATH,
+        )
 
-        if path is None:
-            path = pathlib.Path(self.trainer.log_dir) / SCRIPT_MODULE_PATH
-        torch.jit.save(script_module, path)  # nosec
-        return script_module
+        path = pathlib.Path(path)
+        self.trainer.save_checkpoint(path / CHECKPOINT_PATH)
+        self.model.save_pretrained((path / TRANSFORMER_PATH).as_posix())
 
-    def export_dynamo(
-        self: Self, path: str | None = None
-    ) -> torch.export.ExportedProgram:
-        batch = torch.export.Dim("batch")
-        seq_len = torch.export.Dim("seq_len")
-        dynamic_shapes = {
-            "inputs_embeds": {0: batch, 1: seq_len},
+        processors_args = {
+            "users": self.users_processor.model_dump(),
+            "items": self.items_processor.model_dump(),
         }
-        exported_program = torch.export.export(
-            self.model.eval(),
-            self.example_input_array,
-            dynamic_shapes=dynamic_shapes,
-        )
+        (path / PROCESSORS_JSON).write_text(json.dumps(processors_args, indent=2))
 
-        if path is None:
-            path = pathlib.Path(self.trainer.log_dir) / EXPORTED_PROGRAM_PATH
-        torch.export.save(exported_program, path)  # nosec
-        return exported_program
-
-    def export_onnx(self: Self, path: str | None = None) -> torch.onnx.ONNXProgram:
-        if path is None:
-            path = pathlib.Path(self.trainer.log_dir) / ONNX_PROGRAM_PATH
-
-        dynamo_path = pathlib.Path(path).parent / EXPORTED_PROGRAM_PATH
-        exported_program = self.export_dynamo(dynamo_path)
-        return torch.onnx.export(
-            exported_program,
-            self.example_input_array,
-            path,
-            dynamo=True,
-            optimize=True,
-            verify=True,
-        )
+        lance_db_path = self.items_processor.lance_db_path
+        shutil.copytree(lance_db_path, path / LANCE_DB_PATH)
 
 
 class LoggerSaveConfigCallback(SaveConfigCallback):
@@ -379,7 +342,7 @@ class LoggerSaveConfigCallback(SaveConfigCallback):
         for logger in trainer.loggers:
             if isinstance(logger, lp_loggers.MLFlowLogger):
                 with tempfile.TemporaryDirectory() as path:
-                    config_path = pathlib.Path(path) / self.config_filename
+                    config_path = pathlib.Path(path, self.config_filename)
                     self.parser.save(
                         self.config,
                         config_path,
@@ -467,7 +430,7 @@ if __name__ == "__main__":
     model.configure_model()
 
     with torch.inference_mode():
-        rich.print(model(model.example_input_array))
+        rich.print(model(*model.example_input_array))
         rich.print(model.compute_losses(next(iter(datamodule.train_dataloader()))))
 
     trainer_args = {
