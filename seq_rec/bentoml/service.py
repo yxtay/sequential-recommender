@@ -88,7 +88,7 @@ class Embedder:
         from sentence_transformers import SentenceTransformer
 
         path = self.model_ref.path_of(TRANSFORMER_PATH)
-        self.model = SentenceTransformer(path, local_files_only=True, backend="onnx")
+        self.model = SentenceTransformer(path, local_files_only=True)
         logger.info("model loaded: {}", path)
 
     @bentoml.api()
