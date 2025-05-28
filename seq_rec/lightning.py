@@ -101,27 +101,27 @@ class SeqRecLitModule(LightningModule):
         user: dict[str, torch.Tensor] = batch["user"]
         user_idx = user["idx"]
         # shape: (num_users,)
-        user_embeddings = user["embeddings"]
+        user_inputs_embeds = user["inputs_embeds"]
         # shape: (num_users, seq_len, embed_dim)
-        user_embed = self(user_embeddings)
+        user_embed = self(user_inputs_embeds)
         # shape: (num_users, embed_dim)
 
         # item
         item: dict[str, torch.Tensor] = batch["item"]
         item_idx = item["idx"]
         # shape: (num_items,)
-        item_embeddings = item["embeddings"]
+        item_inputs_embeds = item["inputs_embeds"]
         # shape: (num_items, 1, embed_dim)
-        item_embed = self(item_embeddings)
+        item_embed = self(item_inputs_embeds)
         # shape: (num_items, embed_dim)
 
         # neg item
         neg_item = batch["neg_item"]
         neg_item_idx = neg_item["idx"]
         # shape: (num_items,)
-        neg_item_embeddings = neg_item["embeddings"]
+        neg_item_inputs_embeds = neg_item["inputs_embeds"]
         # shape: (num_items, 1, embed_dim)
-        neg_item_embed = self(neg_item_embeddings)
+        neg_item_embed = self(neg_item_inputs_embeds)
         # shape: (num_items, embed_dim)
         item_idx = torch.cat([item_idx, neg_item_idx])
         item_embed = torch.cat([item_embed, neg_item_embed])
@@ -191,7 +191,7 @@ class SeqRecLitModule(LightningModule):
     def predict_step(self, batch: dict[str, torch.Tensor], _: int) -> pd.DataFrame:
         user_id_col = self.trainer.datamodule.users_processor.id_col
         return self.recommend(
-            batch["embeddings"], top_k=self.hparams.top_k, user_id=batch[user_id_col]
+            batch["inputs_embeds"], top_k=self.hparams.top_k, user_id=batch[user_id_col]
         )
 
     def on_train_start(self) -> None:

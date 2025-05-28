@@ -31,7 +31,7 @@ def merge_examples(examples: tuple[dict[str, Any], ...]) -> dict[str, Any]:
 def embed_example(example: dict[str, Any], *, model: torch.nn.Module) -> dict[str, Any]:
     return {
         **example,
-        "embedding": model(torch.as_tensor(example["embeddings"]).unsqueeze(0))
+        "embedding": model(torch.as_tensor(example["inputs_embeds"]).unsqueeze(0))
         .squeeze(0)
         .numpy(),
     }

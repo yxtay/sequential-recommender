@@ -81,7 +81,7 @@ class FeaturesProcessor(pydantic.BaseModel):
         return self.encoder.get_sentence_embedding_dimension()
 
     def embed(self, example: dict[str, Any]) -> npt.NDArray[np.float64]:
-        return self.encoder.encode([example[self.text_col]], normalize_embeddings=True)
+        return self.encoder.encode([example[self.text_col]])
 
     def process(self, example: dict[str, Any]) -> FeaturesType:
         import xxhash
@@ -90,7 +90,7 @@ class FeaturesProcessor(pydantic.BaseModel):
             **example,
             "idx": xxhash.xxh32_intdigest(str(example[self.id_col])),
             "text": example[self.text_col],
-            "embeddings": self.embed(example),
+            "inputs_embeds": self.embed(example),
         }
 
     def collate(self, batch: list[FeaturesType]) -> FeaturesType:
@@ -130,7 +130,7 @@ class FeaturesProcessor(pydantic.BaseModel):
     def get_batch_data(
         self, subset: str, cycle: int | None = 1
     ) -> torch_data.IterDataPipe[FeaturesType]:
-        fields = ["idx", "embeddings"]
+        fields = ["idx", "inputs_embeds"]
         return (
             self.get_processed_data(subset, cycle=cycle)
             .map(functools.partial(select_fields, fields=fields))
@@ -267,7 +267,7 @@ class UsersProcessor(FeaturesProcessor):
         )
         history_text = list(reversed([*history_text, example[self.text_col]]))
         history_text = history_text[: self.max_seq_len]
-        return self.encoder.encode(history_text, normalize_embeddings=True)
+        return self.encoder.encode(history_text)
 
     @property
     def data_path(self) -> str:
@@ -306,7 +306,7 @@ class InteractionsProcessor(pydantic.BaseModel):
     data_dir: str = DATA_DIR
 
     def process(self, example: dict[str, Any]) -> BatchType:
-        fields = ["idx", "embeddings"]
+        fields = ["idx", "inputs_embeds"]
         user_features = select_fields(
             self.users_processor.process(example), fields=fields
         )
@@ -339,7 +339,7 @@ class InteractionsProcessor(pydantic.BaseModel):
 
         data_path = pathlib.Path(self.data_dir, "ml-1m", "ratings.parquet").as_posix()
         filter_expr = ds.field(f"is_{subset}")
-        fields = ["idx", "embeddings"]
+        fields = ["idx", "inputs_embeds"]
         neg_item_dp = (
             self.items_processor.get_processed_data(subset, cycle=None)
             .map(functools.partial(select_fields, fields=fields))
