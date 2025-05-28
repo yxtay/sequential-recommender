@@ -69,7 +69,6 @@ class PoolingTransformer(torch.nn.Module):
             num_hidden_layers=num_hidden_layers,
             num_attention_heads=num_attention_heads,
             max_position_embeddings=max_position_embeddings,
-            position_embedding_type="relative_key_query",
         )
         return BertModel(config)
 
