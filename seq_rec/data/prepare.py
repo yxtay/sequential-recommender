@@ -7,12 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import polars as pl
 from loguru import logger
 
-from seq_rec.params import (
-    DATA_DIR,
-    ITEM_FEATURE_NAMES,
-    MOVIELENS_1M_URL,
-    USER_FEATURE_NAMES,
-)
+from seq_rec.params import DATA_DIR, MOVIELENS_1M_URL
 
 ###
 # download data
@@ -25,7 +20,7 @@ def download_data(
     import requests
 
     # prepare destination
-    dest = pathlib.Path(dest_dir) / pathlib.Path(url).name
+    dest = pathlib.Path(dest_dir, pathlib.Path(url).name)
 
     # download zip
     if not dest.exists() or overwrite:
@@ -83,8 +78,8 @@ def load_movies(src_dir: str = DATA_DIR) -> pl.LazyFrame:
         )
         .pipe(pl.from_pandas)
         .with_columns(genres=pl.col("genres").str.split("|"))
-        .with_columns(movie_text=pl.struct(ITEM_FEATURE_NAMES).struct.json_encode())
-        .drop(*ITEM_FEATURE_NAMES)
+        .with_columns(movie_text=pl.struct("title", "genres").struct.json_encode())
+        .drop("title", "genres")
     )
     logger.info("movies loaded: {}, shape: {}", movies_dat, movies.shape)
 
@@ -97,10 +92,10 @@ def load_users(src_dir: str = DATA_DIR) -> pl.LazyFrame:
     users_dat = pathlib.Path(src_dir, "ml-1m", "users.dat")
     dtype = {
         "user_id": "int32",
-        "gender": "category",
+        "gender": "str",
         "age": "int32",
         "occupation": "int32",
-        "zipcode": "category",
+        "zipcode": "str",
     }
 
     users = (
@@ -113,8 +108,12 @@ def load_users(src_dir: str = DATA_DIR) -> pl.LazyFrame:
             engine="python",
         )
         .pipe(pl.from_pandas)
-        .with_columns(user_text=pl.struct(USER_FEATURE_NAMES).struct.json_encode())
-        .drop(*USER_FEATURE_NAMES)
+        .with_columns(
+            user_text=pl.struct(
+                "gender", "age", "occupation", "zipcode"
+            ).struct.json_encode()
+        )
+        .drop("gender", "age", "occupation", "zipcode")
     )
     logger.info("users loaded: {}, shape: {}", users_dat, users.shape)
     return users.lazy()

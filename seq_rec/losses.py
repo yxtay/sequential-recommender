@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import abc
-from typing import Self
 
 import torch
 import torch.nn.functional as F  # noqa: N812
@@ -26,7 +25,7 @@ def weighted_mean(
 
 class EmbeddingLoss(torch.nn.Module, abc.ABC):
     def __init__(
-        self: Self,
+        self,
         *,
         hard_negatives_ratio: int | None = None,
         sigma: float = 1.0,
@@ -38,7 +37,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
         self.margin = margin
 
     def forward(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -65,10 +64,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
         )
 
     def check_inputs(
-        self: Self,
-        user_embed: torch.Tensor,
-        item_embed: torch.Tensor,
-        target: torch.Tensor,
+        self, user_embed: torch.Tensor, item_embed: torch.Tensor, target: torch.Tensor
     ) -> None:
         if user_embed.dim() != 2 or item_embed.dim() != 2:  # noqa: PLR2004
             msg = (
@@ -96,7 +92,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
 
     @abc.abstractmethod
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -106,7 +102,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
     ) -> torch.Tensor: ...
 
     def negative_masks(
-        self: Self,
+        self,
         losses: torch.Tensor,
         *,
         user_idx: torch.Tensor,
@@ -126,7 +122,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
         return ~accidental_hits
 
     def hard_negative_mining(
-        self: Self, losses: torch.Tensor, negative_masks: torch.Tensor
+        self, losses: torch.Tensor, negative_masks: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor]:
         if self.hard_negatives_ratio is None:
             return losses, negative_masks
@@ -148,10 +144,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
         return losses, negative_masks
 
     def alignment_loss(
-        self: Self,
-        user_embed: torch.Tensor,
-        item_embed: torch.Tensor,
-        target: torch.Tensor,
+        self, user_embed: torch.Tensor, item_embed: torch.Tensor, target: torch.Tensor
     ) -> torch.Tensor:
         batch_size = user_embed.size(0)
         loss = (
@@ -161,7 +154,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
         return (loss * target.abs()).sum()
 
     def uniformity_loss(
-        self: Self, embed: torch.Tensor, *, idx: torch.Tensor
+        self, embed: torch.Tensor, *, idx: torch.Tensor
     ) -> torch.Tensor:
         logits = -squared_distance(embed, embed)
         # shape: (batch_size, num_items)
@@ -177,7 +170,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
         return (losses + negative_masks.log()).logsumexp(dim=-1)
 
     def contrastive_loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -200,7 +193,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
         return (loss * target.abs()).sum()
 
     def infonce_loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -229,7 +222,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
         return (loss * target.abs()).sum()
 
     def mine_loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -258,7 +251,7 @@ class EmbeddingLoss(torch.nn.Module, abc.ABC):
 
 class AlignmentLoss(EmbeddingLoss):
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -271,7 +264,7 @@ class AlignmentLoss(EmbeddingLoss):
 
 class UniformityLoss(EmbeddingLoss):
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,  # noqa: ARG002
@@ -286,7 +279,7 @@ class UniformityLoss(EmbeddingLoss):
 
 class AlignmentUniformityLoss(EmbeddingLoss):
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -302,7 +295,7 @@ class AlignmentUniformityLoss(EmbeddingLoss):
 
 class ContrastiveLoss(EmbeddingLoss):
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -317,7 +310,7 @@ class ContrastiveLoss(EmbeddingLoss):
 
 class AlignmentContrastiveLoss(EmbeddingLoss):
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -334,7 +327,7 @@ class AlignmentContrastiveLoss(EmbeddingLoss):
 
 class InfomationNoiseContrastiveEstimationLoss(EmbeddingLoss):
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -349,7 +342,7 @@ class InfomationNoiseContrastiveEstimationLoss(EmbeddingLoss):
 
 class MutualInformationNeuralEstimationLoss(EmbeddingLoss):
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -364,7 +357,7 @@ class MutualInformationNeuralEstimationLoss(EmbeddingLoss):
 
 class PairwiseEmbeddingLoss(EmbeddingLoss, abc.ABC):
     def loss(
-        self: Self,
+        self,
         user_embed: torch.Tensor,
         item_embed: torch.Tensor,
         target: torch.Tensor,
@@ -389,14 +382,14 @@ class PairwiseEmbeddingLoss(EmbeddingLoss, abc.ABC):
         return (loss * target.abs()).sum()
 
     @abc.abstractmethod
-    def score_loss_fn(self: Self, score: torch.Tensor) -> torch.Tensor: ...
+    def score_loss_fn(self, score: torch.Tensor) -> torch.Tensor: ...
 
 
 class PairwiseLogisticLoss(PairwiseEmbeddingLoss):
-    def score_loss_fn(self: Self, score: torch.Tensor) -> torch.Tensor:
+    def score_loss_fn(self, score: torch.Tensor) -> torch.Tensor:
         return -F.logsigmoid(score)
 
 
 class PairwiseHingeLoss(PairwiseEmbeddingLoss):
-    def score_loss_fn(self: Self, score: torch.Tensor) -> torch.Tensor:
+    def score_loss_fn(self, score: torch.Tensor) -> torch.Tensor:
         return (-score).relu()
