@@ -46,7 +46,7 @@ class Query(bentoml.IODescriptor):
     text: str = ""
     inputs_embeds: Annotated[npt.NDArray[np.float32], DType("float32")] | None = None
     embedding: (
-        Annotated[npt.NDArray[np.float32], Shape((1, EMBEDDING_DIM)), DType("float32")]
+        Annotated[npt.NDArray[np.float32], Shape((EMBEDDING_DIM,)), DType("float32")]
         | None
     ) = None
 
@@ -73,7 +73,7 @@ PACKAGES = [
     "loguru",
     "pandas",
     "pylance",
-    "sentence-transformers[onnx]",
+    "sentence-transformers",
     "xxhash",
 ]
 image = bentoml.images.PythonImage().python_packages(*PACKAGES)
@@ -99,7 +99,9 @@ class Embedder:
         inputs_embeds = torch.as_tensor(query.inputs_embeds).unsqueeze(0)
         attention_mask = (inputs_embeds != 0).any(dim=-1).short()
         features = {"inputs_embeds": inputs_embeds, "attention_mask": attention_mask}
-        query.embedding = self.model(features)["sentence_embedding"].numpy(force=True)
+
+        embedding = self.model(features)["sentence_embedding"]
+        query.embedding = embedding.squeeze(0).numpy(force=True)
         return query
 
 
