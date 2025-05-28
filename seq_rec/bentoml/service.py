@@ -46,7 +46,7 @@ class Query(bentoml.IODescriptor):
     text: str = ""
     inputs_embeds: Annotated[npt.NDArray[np.float32], DType("float32")] | None = None
     embedding: (
-        Annotated[torch.Tensor, Shape((1, EMBEDDING_DIM)), DType("float32")] | None
+        Annotated[torch.Tensor, Shape((EMBEDDING_DIM,)), DType("float32")] | None
     ) = None
 
 
