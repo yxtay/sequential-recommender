@@ -121,8 +121,7 @@ jobs:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
       - if: ${{ failure() }}
-        run: |
-          ${DOCKER_RUN_CMD} "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.prepare"
+        run: ${DOCKER_RUN_CMD} "${IMAGE_ID}" uv run data
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
