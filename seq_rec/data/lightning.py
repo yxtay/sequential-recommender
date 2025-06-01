@@ -396,10 +396,7 @@ class SeqRecDataModule(LightningDataModule):
     def prepare_data(self, *, overwrite: bool = False) -> pl.LazyFrame:
         from filelock import FileLock
 
-        from seq_rec.data.prepare import (
-            download_unpack_data,
-            prepare_movielens,
-        )
+        from seq_rec.data.prepare import download_unpack_data, prepare_movielens
 
         data_dir = self.hparams.data_dir
         with FileLock(f"{data_dir}.lock"):
