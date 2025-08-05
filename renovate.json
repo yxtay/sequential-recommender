@@ -24,6 +24,10 @@
       "groupName": "python",
       "matchPackageNames": ["python"],
       "matchUpdateTypes": ["minor"]
+    },
+    {
+      "matchPackageNames": ["rich"],
+      "allowedVersions": "!=14.1.0"
     }
   ]
 }
