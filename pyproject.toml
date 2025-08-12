@@ -33,7 +33,7 @@ dev = [
   "flaml[automl,blendsearch]~=2.3",
   "mlflow",
   "pytest~=8.3",
-  "ray[train,tune]~=2.42; sys_platform != 'win32'",
+  "ray[train,tune]~=2.42",
   "standard-imghdr~=3.13.0",
 ]
 
