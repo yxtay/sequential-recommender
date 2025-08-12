@@ -21,8 +21,12 @@ jobs:
   python:
     permissions:
       contents: read
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+      fail-fast: false
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     env:
       HF_HOME: /tmp/huggingface
       PROJECT_NAME: seq_rec
@@ -48,8 +52,7 @@ jobs:
           uv sync
           uv pip list
 
-      - if: ${{ success() || failure() }}
-        run: uv run pytest
+      - run: uv run pytest
 
       - if: ${{ success() || failure() }}
         run: uv run lightning fit --print_config
@@ -64,7 +67,7 @@ jobs:
         run: uv run python -m "${PROJECT_NAME}.data.lightning"
 
       - if: ${{ failure() }}
-        run: uv run python -m "${PROJECT_NAME}.data.prepare"
+        run: uv run data
 
   docker:
     permissions:
@@ -117,6 +120,11 @@ jobs:
 
       - if: ${{ failure() }}
         run: ${DOCKER_RUN_CMD} "${IMAGE_ID}" python -m "${PROJECT_NAME}.lightning"
+        env:
+          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+
+      - if: ${{ failure() }}
+        run: ${DOCKER_RUN_CMD} "${IMAGE_ID}" python -m "${PROJECT_NAME}.data.lightning"
         env:
           IMAGE_ID: ${{ steps.build.outputs.imageid }}
 
