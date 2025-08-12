@@ -76,7 +76,7 @@ PACKAGES = [
     "sentence-transformers",
     "xxhash",
 ]
-image = bentoml.images.PythonImage().python_packages(*PACKAGES)
+image = bentoml.images.Image().python_packages(*PACKAGES)
 ENVS = [{"name": "UV_NO_CACHE", "value": "1"}]
 
 
