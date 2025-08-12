@@ -12,7 +12,7 @@ USER_ID_COL = "user_id"
 USER_TEXT_COL = "user_text"
 
 # model
-ENCODER_NAME = "BAAI/bge-small-en-v1.5"
+ENCODER_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 BATCH_SIZE = 2**5
 EMBEDDING_DIM = 384
 NUM_LAYERS = 1

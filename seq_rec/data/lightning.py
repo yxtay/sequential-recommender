@@ -71,7 +71,7 @@ class FeaturesProcessor(pydantic.BaseModel):
 
     @functools.cached_property
     def encoder(self) -> SentenceTransformer:
-        return SentenceTransformer(self.encoder_name)
+        return SentenceTransformer(self.encoder_name, device="cpu")
 
     @property
     def embedding_dim(self) -> int:
