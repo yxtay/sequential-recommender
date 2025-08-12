@@ -72,7 +72,6 @@ PACKAGES = [
     "lancedb",
     "loguru",
     "pandas",
-    "pylance",
     "sentence-transformers",
     "xxhash",
 ]
