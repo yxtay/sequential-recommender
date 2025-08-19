@@ -41,5 +41,7 @@ updates:
       uv:
         update-types: [minor, patch]
     ignore:
+      - dependency-name: lightning
+        versions: [">=2.5.1", <2.5.4]
       - dependency-name: rich
         versions: [14.1.0]
