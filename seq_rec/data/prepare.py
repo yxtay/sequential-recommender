@@ -7,7 +7,9 @@ from concurrent.futures import ThreadPoolExecutor
 import polars as pl
 from loguru import logger
 
-from seq_rec.params import DATA_DIR, MOVIELENS_1M_URL
+from seq_rec.params import DATA_DIR
+
+MOVIELENS_1M_URL = "http://files.grouplens.org/datasets/movielens/ml-1m.zip"
 
 ###
 # download data
