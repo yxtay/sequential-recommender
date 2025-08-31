@@ -1304,7 +1304,7 @@ wheels = [
 
 [[package]]
 name = "lightning"
-version = "2.5.0.post0"
+version = "2.5.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "fsspec", extra = ["http"] },
@@ -1318,9 +1318,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e6/6d/d9d209d9ab3d270ee89afb8f71a3d84d48d41a1880e89d8215d26e8018b7/lightning-2.5.0.post0.tar.gz", hash = "sha256:f720fe4f6d03a7f15f9aef3112c5a0d1eafd8d27b903f4a1354b609685b2ec70", size = 628132, upload-time = "2024-12-21T01:36:50.746Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d1/da/2e0bb05c037db033e36916654479678d97cba8e05f2fd8abbed558cff957/lightning-2.5.4.tar.gz", hash = "sha256:cec9459a356117f11c501b591fe80f327947614fc345dc6b6c9f8d4d373f214e", size = 637370, upload-time = "2025-08-29T11:45:19.06Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/54/2de887e964a561776ac49c5e715ca8a56138ea7e2b95325e0a79aa46a070/lightning-2.5.0.post0-py3-none-any.whl", hash = "sha256:b08463326e6fb39cb3e4db8ff2660a80ce3372a0688c80e3370c091346ea220c", size = 815241, upload-time = "2024-12-21T01:36:46.586Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/7e/bff6e2846da7b7f6b1ac67b96dbc7148664d69f9f2b12e11fd6b0d7cda01/lightning-2.5.4-py3-none-any.whl", hash = "sha256:49fdc84df9d809e4f396ab38a5d327df725fe6dd9303473c49e52cba4fbdcc2b", size = 825219, upload-time = "2025-08-29T11:45:16.845Z" },
 ]
 
 [[package]]
@@ -2974,7 +2974,7 @@ requires-dist = [
     { name = "datasets", specifier = "~=4.0" },
     { name = "jsonargparse", extras = ["signatures"], specifier = "~=4.35" },
     { name = "lancedb", specifier = ">=0.19,<1.0" },
-    { name = "lightning", specifier = "~=2.5,<2.5.1" },
+    { name = "lightning", specifier = "~=2.5,<2.5.5" },
     { name = "loguru", specifier = ">=0.7,<1.0" },
     { name = "mlflow-skinny", specifier = "~=3.1" },
     { name = "polars", extras = ["pandas"], specifier = "~=1.19" },
